@@ -7,6 +7,8 @@ services:
       - .:/app
     environment:
       FLASK_ENV: development
+      FLASK_DEBUG: 1
+      PYTHONUNBUFFERED: 1
     env_file:
       - .env
     depends_on:

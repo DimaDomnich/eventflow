@@ -39,10 +39,12 @@ class UserModel(db.Model):
         DateTime, server_default=func.now(), onupdate=func.now()
     )
 
-    status_id: Mapped[int] = mapped_column(ForeignKey("dict_user_statuses.id"))
+    status_id: Mapped[int] = mapped_column(
+        ForeignKey("dict_user_statuses.id"), default=1
+    )
     status: Mapped["UserStatusModel"] = relationship()
 
-    role_id: Mapped[int] = mapped_column(ForeignKey("dict_user_roles.id"))
+    role_id: Mapped[int] = mapped_column(ForeignKey("dict_user_roles.id"), default=1)
     role: Mapped["UserRoleModel"] = relationship()
 
     events: Mapped[list["EventModel"]] = relationship(

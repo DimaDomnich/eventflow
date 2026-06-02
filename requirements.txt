@@ -5,3 +5,4 @@ flask-jwt-extended
 psycopg2-binary
 redis
 python-dotenv
+flask-bcrypt
