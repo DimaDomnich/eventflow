@@ -1,6 +1,7 @@
 from flask import Flask
 from .config import config_map
 from .extensions import db, migrate, jwt, bcrypt, configure_jwt
+from flask_smorest import Api
 from . import models
 import os
 
@@ -17,8 +18,12 @@ def create_app():
     configure_jwt(app, jwt)
     bcrypt.init_app(app)
 
-    from .api import api_bp
+    api = Api(app)
 
-    app.register_blueprint(api_bp, url_prefix="/api")
+    from .api.auth import auth_blp
+    from .api.events import events_blp
+
+    api.register_blueprint(auth_blp, url_prefix="/api/auth")
+    api.register_blueprint(events_blp, url_prefix="/api/events")
 
     return app

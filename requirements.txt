@@ -6,3 +6,5 @@ psycopg2-binary
 redis
 python-dotenv
 flask-bcrypt
+flask-smorest
+marshmallow

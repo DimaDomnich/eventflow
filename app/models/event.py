@@ -26,7 +26,7 @@ class EventModel(db.Model):
     starts_at: Mapped[datetime] = mapped_column()
     ends_at: Mapped[datetime] = mapped_column()
     capacity: Mapped[int] = mapped_column()
-    banner_url: Mapped[str] = mapped_column(String(500))
+    banner_url: Mapped[str] = mapped_column(String(500), nullable=True, default="")
     created_at: Mapped[datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         server_default=func.now(), onupdate=func.now()
@@ -38,7 +38,9 @@ class EventModel(db.Model):
     category_id: Mapped[int] = mapped_column(ForeignKey("event_categories.id"))
     category: Mapped["EventCategoryModel"] = relationship()
 
-    status_id: Mapped[int] = mapped_column(ForeignKey("dict_event_statuses.id"))
+    status_id: Mapped[int] = mapped_column(
+        ForeignKey("dict_event_statuses.id"), default=1
+    )
     status: Mapped["EventStatusModel"] = relationship()
 
     tags: Mapped[list["TagModel"]] = relationship(
