@@ -18,13 +18,17 @@ class OrderModel(db.Model):
     __tablename__ = "orders"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    payment_intent_id: Mapped[str] = mapped_column(String(255), unique=True)
-    total_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2))
+    payment_intent_id: Mapped[str] = mapped_column(
+        String(255), unique=True, nullable=True
+    )
+    total_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0)
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     user: Mapped["UserModel"] = relationship(back_populates="orders")
 
-    status_id: Mapped[int] = mapped_column(ForeignKey("dict_order_statuses.id"))
+    status_id: Mapped[int] = mapped_column(
+        ForeignKey("dict_order_statuses.id"), default=1
+    )
     status: Mapped["OrderStatusModel"] = relationship()
 
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

@@ -46,7 +46,9 @@ class TicketModel(db.Model):
     ticket_type_id: Mapped[int] = mapped_column(ForeignKey("ticket_types.id"))
     ticket_type: Mapped["TicketTypeModel"] = relationship()
 
-    status_id: Mapped[int] = mapped_column(ForeignKey("dict_ticket_statuses.id"))
+    status_id: Mapped[int] = mapped_column(
+        ForeignKey("dict_ticket_statuses.id"), default=1
+    )
     status: Mapped["TicketStatusModel"] = relationship()
 
 

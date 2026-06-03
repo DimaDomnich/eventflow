@@ -7,3 +7,7 @@ class TicketTypeSchema(Schema):
     price = fields.Decimal(as_string=True)
     quantity = fields.Int()
     sold_count = fields.Int(dump_only=True)
+
+
+class TicketSchema(Schema):
+    id = fields.Int(dump_only=True)

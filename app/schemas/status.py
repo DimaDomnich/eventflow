@@ -1,6 +1,14 @@
 from marshmallow import Schema, fields
 
 
-class EventStatusSchema(Schema):
+class StatusSchema(Schema):
     id = fields.Int(dump_only=True)
     name = fields.Str()
+
+
+class EventStatusSchema(StatusSchema):
+    pass
+
+
+class OrderStatusSchema(StatusSchema):
+    pass
