@@ -5,6 +5,7 @@ from sqlalchemy import select
 from app.models.status import TicketStatusModel
 from app.models.ticket import TicketModel, TicketTypeModel
 from app.schemas.ticket import TicketSchema
+from app.tasks.waitlist import notify_next_waitlist_person
 from app.utils.decorators import role_required
 from app.extensions import db
 from flask_smorest import abort
@@ -44,5 +45,7 @@ class TicketsCancel(MethodView):
         ticket_type.sold_count -= 1
 
         db.session.commit()
+
+        notify_next_waitlist_person.delay(ticket_type.event_id)
 
         return ticket

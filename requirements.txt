@@ -8,3 +8,4 @@ python-dotenv
 flask-bcrypt
 flask-smorest
 marshmallow
+celery

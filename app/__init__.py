@@ -4,6 +4,7 @@ from .extensions import db, migrate, jwt, bcrypt, configure_jwt
 from flask_smorest import Api
 from . import models
 import os
+from .celery_app import celery
 
 
 def create_app():
@@ -31,5 +32,12 @@ def create_app():
     api.register_blueprint(orders_blp, url_prefix="/api/orders")
     api.register_blueprint(waitlist_blp, url_prefix="/api/waitlist")
     api.register_blueprint(tickets_blp, url_prefix="/api/tickets")
+
+    class ContextTask(celery.Task):
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return self.run(*args, **kwargs)
+
+    celery.Task = ContextTask
 
     return app
