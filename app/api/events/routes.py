@@ -3,10 +3,16 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_smorest import abort
 from sqlalchemy.orm import joinedload
 from app.models.category import EventCategoryModel
-from app.models.event import EventModel
+from app.models.event import EventModel, EventTagModel
 from app.models.status import EventStatusModel
+from app.models.tag import TagModel
 from app.models.ticket import TicketTypeModel
-from app.schemas.event import CreateEventSchema, EventSchema, UpdateEventStatusSchema
+from app.schemas.event import (
+    AddTagToEventSchema,
+    CreateEventSchema,
+    EventSchema,
+    UpdateEventStatusSchema,
+)
 from app.extensions import db
 from app.schemas.ticket import TicketTypeSchema
 from app.utils.decorators import role_required
@@ -144,3 +150,57 @@ class EventTicketTypes(MethodView):
         db.session.commit()
 
         return ticket_type
+
+
+@events_blp.route("/<int:event_id>/tags")
+class AddEventTag(MethodView):
+    @jwt_required()
+    @role_required("organizer")
+    @events_blp.arguments(AddTagToEventSchema)
+    @events_blp.response(201, EventSchema)
+    def post(self, validated_data, event_id):
+        event = db.session.get(EventModel, event_id)
+        if not event:
+            abort(404, message="Invalid event.")
+
+        if str(event.organizer_id) != get_jwt_identity():
+            abort(403, message="Forbidden.")
+
+        tag_id = validated_data["tag_id"]
+
+        if tag_id in [t.id for t in event.tags]:
+            abort(400, message="Tag already assigned.")
+
+        event_tag = EventTagModel(event_id=event_id, tag_id=tag_id)
+
+        db.session.add(event_tag)
+        db.session.commit()
+
+        return event
+
+
+@events_blp.route("/<int:event_id>/tags/<int:tag_id>")
+class RemoveEventTag(MethodView):
+    @jwt_required()
+    @role_required("organizer")
+    @events_blp.response(204)
+    def delete(self, event_id, tag_id):
+        event = db.session.get(EventModel, event_id)
+        if not event:
+            abort(404, message="Invalid event.")
+
+        if not db.session.get(TagModel, tag_id):
+            abort(404, message="Invalid tag.")
+
+        if str(event.organizer_id) != get_jwt_identity():
+            abort(403, message="Forbidden.")
+
+        event_tag = EventTagModel.query.filter_by(
+            event_id=event_id, tag_id=tag_id
+        ).first()
+
+        if not event_tag:
+            abort(400, message="Tag wasn't assigned to event.")
+
+        db.session.delete(event_tag)
+        db.session.commit()

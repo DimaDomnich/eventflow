@@ -37,3 +37,7 @@ class EventSchema(Schema):
 
 class UpdateEventStatusSchema(Schema):
     status_id = fields.Int(required=True)
+
+
+class AddTagToEventSchema(Schema):
+    tag_id = fields.Int(required=True)

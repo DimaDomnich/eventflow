@@ -26,12 +26,14 @@ def create_app():
     from .api.orders import orders_blp
     from .api.waitlist import waitlist_blp
     from .api.tickets import tickets_blp
+    from .api.tags import tags_blp
 
     api.register_blueprint(auth_blp, url_prefix="/api/auth")
     api.register_blueprint(events_blp, url_prefix="/api/events")
     api.register_blueprint(orders_blp, url_prefix="/api/orders")
     api.register_blueprint(waitlist_blp, url_prefix="/api/waitlist")
     api.register_blueprint(tickets_blp, url_prefix="/api/tickets")
+    api.register_blueprint(tags_blp, url_prefix="/api/tags")
 
     class ContextTask(celery.Task):
         def __call__(self, *args, **kwargs):
