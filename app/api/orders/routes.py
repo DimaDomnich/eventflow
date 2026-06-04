@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from flask.views import MethodView
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.order import OrderModel
@@ -69,7 +67,9 @@ class Orders(MethodView):
             req_ticket_type = req_map[t.id]
 
             for _ in range(req_ticket_type["count"]):
-                ticket = TicketModel(qr_code="", order_id=order.id, ticket_type_id=t.id)
+                ticket = TicketModel(
+                    order_id=order.id, ticket_type_id=t.id
+                )  # qr_code=""
                 order_total += t.price
                 db.session.add(ticket)
 

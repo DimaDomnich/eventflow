@@ -34,7 +34,7 @@ class TicketModel(db.Model):
     __tablename__ = "tickets"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    qr_code: Mapped[str] = mapped_column(String(500))
+    qr_code: Mapped[str] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         server_default=func.now(), onupdate=func.now()

@@ -38,12 +38,3 @@ class TicketStatusModel(db.Model):
     name: Mapped[str] = mapped_column(String(50))
     description: Mapped[str] = mapped_column(String(80))
     is_terminal: Mapped[bool] = mapped_column(Boolean(), default=False)
-
-
-class RsvpStatusModel(db.Model):
-    __tablename__ = "dict_rsvp_statuses"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(50))
-    description: Mapped[str] = mapped_column(String(80))
-    is_terminal: Mapped[bool] = mapped_column(Boolean(), default=False)
