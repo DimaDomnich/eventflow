@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from app.models.status import UserStatusModel
     from app.models.event import EventModel
     from app.models.order import OrderModel
-    from app.models.rsvp import RsvpModel
 
 
 class RoleEnum(enum.Enum):
@@ -49,8 +48,5 @@ class UserModel(db.Model):
 
     events: Mapped[list["EventModel"]] = relationship(
         back_populates="organizer"  # , cascade="all, delete-orphan"
-    )
-    rsvps: Mapped[list["RsvpModel"]] = relationship(
-        back_populates="user"  # , cascade="all, delete-orphan"
     )
     orders: Mapped[list["OrderModel"]] = relationship(back_populates="user")

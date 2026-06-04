@@ -12,3 +12,7 @@ class EventStatusSchema(StatusSchema):
 
 class OrderStatusSchema(StatusSchema):
     pass
+
+
+class TicketStatusSchema(StatusSchema):
+    pass

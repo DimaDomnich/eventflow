@@ -23,9 +23,13 @@ def create_app():
     from .api.auth import auth_blp
     from .api.events import events_blp
     from .api.orders import orders_blp
+    from .api.waitlist import waitlist_blp
+    from .api.tickets import tickets_blp
 
     api.register_blueprint(auth_blp, url_prefix="/api/auth")
     api.register_blueprint(events_blp, url_prefix="/api/events")
     api.register_blueprint(orders_blp, url_prefix="/api/orders")
+    api.register_blueprint(waitlist_blp, url_prefix="/api/waitlist")
+    api.register_blueprint(tickets_blp, url_prefix="/api/tickets")
 
     return app

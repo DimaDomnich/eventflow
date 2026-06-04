@@ -67,9 +67,7 @@ class Orders(MethodView):
             req_ticket_type = req_map[t.id]
 
             for _ in range(req_ticket_type["count"]):
-                ticket = TicketModel(
-                    order_id=order.id, ticket_type_id=t.id
-                )  # qr_code=""
+                ticket = TicketModel(order_id=order.id, ticket_type_id=t.id)
                 order_total += t.price
                 db.session.add(ticket)
 
