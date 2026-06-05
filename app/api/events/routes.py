@@ -1,3 +1,4 @@
+from flask import request
 from flask.views import MethodView
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_smorest import abort
@@ -16,6 +17,7 @@ from app.schemas.event import (
 from app.extensions import db
 from app.schemas.ticket import TicketTypeSchema
 from app.utils.decorators import role_required
+from app.utils.s3 import upload_file_to_s3
 from . import events_blp
 
 
@@ -204,3 +206,28 @@ class RemoveEventTag(MethodView):
 
         db.session.delete(event_tag)
         db.session.commit()
+
+
+@events_blp.route("/<int:event_id>/banner")
+class UploadEventBanner(MethodView):
+    @jwt_required()
+    @role_required("organizer")
+    @events_blp.response(201, EventSchema)
+    def post(self, event_id):
+        event = EventModel.query.get_or_404(event_id)
+
+        if str(event.organizer_id) != get_jwt_identity():
+            abort(403, message="Forbidden.")
+
+        file = request.files["banner"]
+
+        if not file:
+            abort(400, message="File was not provided.")
+
+        banner_url = upload_file_to_s3(file, folder="banners")
+
+        event.banner_url = banner_url
+
+        db.session.commit()
+
+        return event

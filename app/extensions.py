@@ -1,3 +1,4 @@
+import boto3
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
@@ -21,3 +22,12 @@ def configure_jwt(app, jwt):
         jti = jwt_payload["jti"]
         redis = get_redis_client()
         return redis.get(f"blacklist:{jti}") is not None
+
+
+def get_s3_client():
+    return boto3.client(
+        "s3",
+        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+        region_name=os.getenv("AWS_REGION"),
+    )

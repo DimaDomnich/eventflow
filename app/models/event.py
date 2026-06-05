@@ -26,7 +26,7 @@ class EventModel(db.Model):
     starts_at: Mapped[datetime] = mapped_column()
     ends_at: Mapped[datetime] = mapped_column()
     capacity: Mapped[int] = mapped_column()
-    banner_url: Mapped[str] = mapped_column(String(500), nullable=True, default="")
+    banner_url: Mapped[str] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         server_default=func.now(), onupdate=func.now()

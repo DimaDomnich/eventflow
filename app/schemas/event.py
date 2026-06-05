@@ -25,6 +25,7 @@ class EventSchema(Schema):
     starts_at = fields.DateTime()
     ends_at = fields.DateTime()
     capacity = fields.Int()
+    banner_url = fields.Str(dump_only=True)
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
 
