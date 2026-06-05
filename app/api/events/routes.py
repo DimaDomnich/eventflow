@@ -17,7 +17,8 @@ from app.schemas.event import (
 from app.extensions import db
 from app.schemas.ticket import TicketTypeSchema
 from app.utils.decorators import role_required
-from app.utils.s3 import upload_file_to_s3
+from app.utils.files import validate_image_files
+from app.utils.s3 import extract_s3_key, remove_file_from_s3, upload_file_to_s3
 from . import events_blp
 
 
@@ -224,9 +225,34 @@ class UploadEventBanner(MethodView):
         if not file:
             abort(400, message="File was not provided.")
 
+        if not validate_image_files(file):
+            abort(400, message="Only image files are accepted.")
+
         banner_url = upload_file_to_s3(file, folder="banners")
 
         event.banner_url = banner_url
+
+        db.session.commit()
+
+        return event
+
+    @jwt_required()
+    @role_required("organizer")
+    @events_blp.response(200, EventSchema)
+    def delete(self, event_id):
+        event = EventModel.query.get_or_404(event_id)
+
+        if str(event.organizer_id) != get_jwt_identity():
+            abort(403, message="Forbidden.")
+
+        banner_url = event.banner_url
+
+        if not banner_url:
+            abort(400, message="Banner is not set.")
+
+        remove_file_from_s3(extract_s3_key(banner_url))
+
+        event.banner_url = None
 
         db.session.commit()
 
