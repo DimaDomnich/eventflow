@@ -19,19 +19,19 @@ provider "aws" {
 }
 
 module "s3" {
-  source         = "./modules/s3"
+  source         = "../../modules/s3"
   project_name   = var.project_name
   s3_bucket_name = var.s3_bucket_name
 }
 
 module "iam" {
-  source         = "./modules/iam"
+  source         = "../../modules/iam"
   project_name   = var.project_name
   s3_bucket_name = var.s3_bucket_name
 }
 
 module "lambda" {
-  source             = "./modules/lambda"
+  source             = "../../modules/lambda"
   project_name       = var.project_name
   s3_bucket_name     = var.s3_bucket_name
   lambda_role_arn    = module.iam.lambda_role_arn
@@ -39,12 +39,12 @@ module "lambda" {
 }
 
 module "ecr" {
-  source       = "./modules/ecr"
+  source       = "../../modules/ecr"
   project_name = var.project_name
 }
 
 module "ses" {
-  source           = "./modules/ses"
+  source           = "../../modules/ses"
   project_name     = var.project_name
   ses_sender_email = var.ses_sender_email
 }
