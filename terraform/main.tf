@@ -5,7 +5,13 @@ terraform {
       version = "~> 5.0"
     }
   }
-
+  backend "s3" {
+    bucket       = "eventflow-terraform-state-270278217201"
+    key          = "eventflow/terraform.tfstate"
+    region       = "eu-central-1"
+    use_lockfile = true
+    encrypt      = true
+  }
 }
 
 provider "aws" {
