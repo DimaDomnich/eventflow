@@ -13,3 +13,7 @@ variable "s3_bucket_name" {
 variable "ses_sender_email" {
   default = "d.domnich002@gmail.com"
 }
+
+variable "environment" {
+  default = "dev"
+}

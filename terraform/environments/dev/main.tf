@@ -48,3 +48,9 @@ module "ses" {
   project_name     = var.project_name
   ses_sender_email = var.ses_sender_email
 }
+
+module "vpc" {
+  source       = "../../modules/vpc"
+  project_name = var.project_name
+  environment  = var.environment
+}
