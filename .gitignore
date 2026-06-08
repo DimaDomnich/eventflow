@@ -69,3 +69,10 @@ docker-compose.override.yml
 *.log
 logs/
 /celerybeat-schedule
+
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfstate.*
