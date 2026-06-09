@@ -62,7 +62,7 @@ module "rds" {
   vpc_id                    = module.vpc.vpc_id
   private_subnet_ids        = module.vpc.private_subnet_ids
   db_password               = var.db_password
-  allowed_security_group_id = "" # todo
+  allowed_security_group_id = module.ecs.ecs_security_group_id
 }
 
 module "elasti_cache" {
@@ -71,5 +71,34 @@ module "elasti_cache" {
   environment               = var.environment
   vpc_id                    = module.vpc.vpc_id
   private_subnet_ids        = module.vpc.private_subnet_ids
-  allowed_security_group_id = "" # todo
+  allowed_security_group_id = module.ecs.ecs_security_group_id
+}
+
+
+module "alb" {
+  source            = "../../modules/alb"
+  project_name      = var.project_name
+  environment       = var.environment
+  vpc_id            = module.vpc.vpc_id
+  public_subnet_ids = module.vpc.public_subnet_ids
+}
+
+module "ecs" {
+  source                = "../../modules/ecs"
+  project_name          = var.project_name
+  environment           = var.environment
+  ses_sender            = var.ses_sender_email
+  aws_region            = var.aws_region
+  s3_bucket             = var.s3_bucket_name
+  secret_key            = var.secret_key
+  jwt_secret_key        = var.jwt_secret_key
+  db_url                = module.rds.db_endpoint
+  redis_url             = module.elasti_cache.redis_endpoint
+  ecr_repository_url    = module.ecr.app_repository_url
+  private_subnet_ids    = module.vpc.private_subnet_ids
+  public_subnet_ids     = module.vpc.public_subnet_ids
+  vpc_id                = module.vpc.vpc_id
+  target_group_arn      = module.alb.target_group_arn
+  alb_security_group_id = module.alb.alb_security_group_id
+  db_password           = var.db_password
 }

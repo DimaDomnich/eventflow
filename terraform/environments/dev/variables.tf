@@ -21,3 +21,11 @@ variable "environment" {
 variable "db_password" {
   sensitive = true
 }
+
+variable "jwt_secret_key" {
+  sensitive = true
+}
+
+variable "secret_key" {
+  sensitive = true
+}
