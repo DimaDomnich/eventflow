@@ -64,3 +64,12 @@ module "rds" {
   db_password               = var.db_password
   allowed_security_group_id = "" # todo
 }
+
+module "elasti_cache" {
+  source                    = "../../modules/elasticache"
+  project_name              = var.project_name
+  environment               = var.environment
+  vpc_id                    = module.vpc.vpc_id
+  private_subnet_ids        = module.vpc.private_subnet_ids
+  allowed_security_group_id = "" # todo
+}
