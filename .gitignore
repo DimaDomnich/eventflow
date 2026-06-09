@@ -76,3 +76,4 @@ logs/
 *.tfstate
 *.tfstate.backup
 *.tfstate.*
+terraform/environments/**/*.tfvars

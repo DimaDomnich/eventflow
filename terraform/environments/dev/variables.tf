@@ -17,3 +17,7 @@ variable "ses_sender_email" {
 variable "environment" {
   default = "dev"
 }
+
+variable "db_password" {
+  sensitive = true
+}
