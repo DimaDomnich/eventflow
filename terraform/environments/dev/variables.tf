@@ -29,3 +29,7 @@ variable "jwt_secret_key" {
 variable "secret_key" {
   sensitive = true
 }
+
+variable "allowed_ip" {
+  sensitive = true
+}

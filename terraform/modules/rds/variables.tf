@@ -2,6 +2,7 @@ variable "project_name" {}
 variable "environment" {}
 variable "vpc_id" {}
 variable "private_subnet_ids" {}
+variable "bastion_security_group_id" {}
 
 variable "db_name" {
   default = "eventflow"
