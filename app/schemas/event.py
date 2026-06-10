@@ -1,5 +1,7 @@
 from marshmallow import Schema, fields, validate
 
+from app.schemas.shared.pagination import PaginationQuerySchema, PaginationSchema
+
 from .tag import TagSchema
 from .ticket import TicketTypeSchema
 from .user import OrganizerSchema
@@ -34,6 +36,25 @@ class EventSchema(Schema):
     organizer = fields.Nested(OrganizerSchema, dump_only=True)
     tags = fields.List(fields.Nested(TagSchema), dump_only=True)
     ticket_types = fields.List(fields.Nested(TicketTypeSchema), dump_only=True)
+
+
+class EventListSchema(PaginationSchema):
+    items = fields.List(fields.Nested(EventSchema))
+
+
+class EventListQuerySchema(PaginationQuerySchema):
+    search = fields.Str(load_default=None)
+    category_id = fields.Int(load_default=None)
+    status_id = fields.Int(load_default=None)
+    starts_after = fields.DateTime(load_default=None)
+    starts_before = fields.DateTime(load_default=None)
+    sort_by = fields.Str(
+        load_default="created_at",
+        validate=validate.OneOf(["created_at", "starts_at", "title"]),
+    )
+    sort_order = fields.Str(
+        load_default="desc", validate=validate.OneOf(["asc", "desc"])
+    )
 
 
 class UpdateEventStatusSchema(Schema):

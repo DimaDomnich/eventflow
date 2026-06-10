@@ -11,6 +11,8 @@ from app.models.ticket import TicketTypeModel
 from app.schemas.event import (
     AddTagToEventSchema,
     CreateEventSchema,
+    EventListQuerySchema,
+    EventListSchema,
     EventSchema,
     UpdateEventStatusSchema,
 )
@@ -25,15 +27,51 @@ from . import events_blp
 @events_blp.route("")
 class EventsList(MethodView):
     @jwt_required()
-    @events_blp.response(200, EventSchema(many=True))
-    def get(self):
-        return EventModel.query.options(
+    @events_blp.arguments(EventListQuerySchema, location="query")
+    @events_blp.response(200, EventListSchema)
+    def get(self, validated_params):
+        page, per_page = (validated_params["page"], validated_params["per_page"])
+
+        query = EventModel.query.options(
             joinedload(EventModel.category),
             joinedload(EventModel.status),
             joinedload(EventModel.organizer),
             joinedload(EventModel.tags),
             joinedload(EventModel.ticket_types),
-        ).all()
+        )
+
+        if validated_params["search"]:
+            query = query.filter(
+                EventModel.title.ilike(f"%{validated_params['search']}%")
+            )
+
+        if validated_params["category_id"]:
+            query = query.filter(
+                EventModel.category_id == validated_params["category_id"]
+            )
+
+        if validated_params["status_id"]:
+            query = query.filter(EventModel.status_id == validated_params["status_id"])
+
+        if validated_params["starts_after"]:
+            query = query.filter(
+                EventModel.starts_at >= validated_params["starts_after"]
+            )
+
+        if validated_params["starts_before"]:
+            query = query.filter(
+                EventModel.starts_at <= validated_params["starts_before"]
+            )
+
+        sort_col = getattr(EventModel, validated_params["sort_by"])
+        if validated_params["sort_order"] == "desc":
+            query = query.order_by(sort_col.desc())
+        else:
+            query = query.order_by(sort_col.asc())
+
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+        return pagination
 
     @jwt_required()
     @role_required("organizer")
