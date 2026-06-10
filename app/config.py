@@ -34,7 +34,10 @@ class TestingConfig(Config):
 
 
 config_map = {
+    "dev": DevelopmentConfig,
     "development": DevelopmentConfig,
+    "prod": ProductionConfig,
     "production": ProductionConfig,
     "testing": TestingConfig,
+    "test": TestingConfig,
 }
