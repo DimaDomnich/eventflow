@@ -69,7 +69,7 @@ class TicketStatusHistoryModel(db.Model):
     changed_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
 
-class TicketCheckIns(db.Model):
+class TicketCheckinsModel(db.Model):
     __tablename__ = "ticket_check_ins"
 
     id: Mapped[int] = mapped_column(primary_key=True)

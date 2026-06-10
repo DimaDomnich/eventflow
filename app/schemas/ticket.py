@@ -18,3 +18,10 @@ class TicketSchema(Schema):
     order_id = fields.Int(dump_only=True)
     status = fields.Nested(TicketTypeSchema, dump_only=True)
     ticket_type = fields.Nested(TicketTypeSchema, dump_only=True)
+
+
+class TicketCheckinSchema(Schema):
+    id = fields.Int(dump_only=True)
+    ticket_id = fields.Int(dump_only=True)
+    checked_in_by_id = fields.Int(dump_only=True)
+    checked_in_at = fields.DateTime(dump_only=True)

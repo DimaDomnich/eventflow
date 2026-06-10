@@ -3,8 +3,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import select
 
 from app.models.status import TicketStatusModel
-from app.models.ticket import TicketModel, TicketTypeModel
-from app.schemas.ticket import TicketSchema
+from app.models.ticket import TicketCheckinsModel, TicketModel, TicketTypeModel
+from app.schemas.ticket import TicketCheckinSchema, TicketSchema
 from app.tasks.waitlist import notify_next_waitlist_person
 from app.utils.decorators import role_required
 from app.extensions import db
@@ -49,3 +49,70 @@ class TicketsCancel(MethodView):
         notify_next_waitlist_person.delay(ticket_type.event_id)
 
         return ticket
+
+
+@tickets_blp.route("/<int:ticket_id>/payment")
+class TicketPayment(MethodView):
+    @jwt_required()
+    @role_required("attendee")
+    @tickets_blp.response(200, TicketSchema)
+    def patch(self, ticket_id):
+        ticket = TicketModel.query.get_or_404(ticket_id)
+
+        if str(ticket.order.user_id) != get_jwt_identity():
+            abort(403, message="Forbidden.")
+
+        reserved_status = TicketStatusModel.query.filter(
+            TicketStatusModel.name == "reserved"
+        ).first()
+
+        if reserved_status.id != ticket.status_id:
+            abort(400, message="Invalid ticket for this operation.")
+
+        confirmed_status = TicketStatusModel.query.filter(
+            TicketStatusModel.name == "confirmed"
+        ).first()
+
+        ticket.status = confirmed_status
+
+        db.session.commit()
+
+        return ticket
+
+
+@tickets_blp.route("/<int:ticket_id>/checkin")
+class TicketsCheckin(MethodView):
+    @jwt_required()
+    @role_required("organizer")
+    @tickets_blp.response(201, TicketCheckinSchema)
+    def post(self, ticket_id):
+        ticket = TicketModel.query.get_or_404(ticket_id)
+
+        if str(ticket.ticket_type.event.organizer_id) != get_jwt_identity():
+            abort(403, message="Forbidden.")
+
+        if TicketCheckinsModel.query.filter(
+            TicketCheckinsModel.ticket_id == ticket_id
+        ).first():
+            abort(400, message="Ticket has already been checked in.")
+
+        confirmed_status = TicketStatusModel.query.filter(
+            TicketStatusModel.name == "confirmed"
+        ).first()
+
+        if ticket.status_id != confirmed_status.id:
+            abort(400, message="Invalid ticket status.")
+
+        ticket_checkin = TicketCheckinsModel(
+            ticket_id=ticket_id,
+            checked_in_by_id=get_jwt_identity(),
+        )
+
+        ticket.status = TicketStatusModel.query.filter(
+            TicketStatusModel.name == "used"
+        ).first()
+
+        db.session.add(ticket_checkin)
+        db.session.commit()
+
+        return ticket_checkin

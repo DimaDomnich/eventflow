@@ -13,7 +13,7 @@ from .ticket import (
     TicketTypeModel,
     TicketModel,
     TicketStatusHistoryModel,
-    TicketCheckIns,
+    TicketCheckinsModel,
 )
 from .waitlist import WaitlistModel
 
@@ -34,6 +34,6 @@ __all__ = [
     "TicketTypeModel",
     "TicketModel",
     "TicketStatusHistoryModel",
-    "TicketCheckIns",
+    "TicketCheckinsModel",
     "WaitlistModel",
 ]
