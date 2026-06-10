@@ -3,7 +3,12 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import select
 
 from app.models.status import TicketStatusModel
-from app.models.ticket import TicketCheckinsModel, TicketModel, TicketTypeModel
+from app.models.ticket import (
+    TicketCheckinsModel,
+    TicketModel,
+    TicketStatusHistoryModel,
+    TicketTypeModel,
+)
 from app.schemas.ticket import TicketCheckinSchema, TicketSchema
 from app.tasks.waitlist import notify_next_waitlist_person
 from app.utils.decorators import role_required
@@ -28,11 +33,11 @@ class TicketsCancel(MethodView):
         if ticket.status.is_terminal:
             abort(400, message="Invalid action.")
 
-        status = TicketStatusModel.query.filter(
+        cancelled_status = TicketStatusModel.query.filter(
             TicketStatusModel.name == "cancelled"
         ).first_or_404()
 
-        ticket.status_id = status.id
+        ticket.status_id = cancelled_status.id
 
         stmt = (
             select(TicketTypeModel)
@@ -43,6 +48,13 @@ class TicketsCancel(MethodView):
         ticket_type = db.session.execute(stmt).scalar()
 
         ticket_type.sold_count -= 1
+
+        history_record = TicketStatusHistoryModel(
+            ticket_id=ticket_id,
+            status_id=cancelled_status.id,
+            changed_by_id=get_jwt_identity(),
+        )
+        db.session.add(history_record)
 
         db.session.commit()
 
@@ -74,6 +86,13 @@ class TicketPayment(MethodView):
         ).first()
 
         ticket.status = confirmed_status
+
+        history_record = TicketStatusHistoryModel(
+            ticket_id=ticket_id,
+            status_id=confirmed_status.id,
+            changed_by_id=get_jwt_identity(),
+        )
+        db.session.add(history_record)
 
         db.session.commit()
 
@@ -108,11 +127,21 @@ class TicketsCheckin(MethodView):
             checked_in_by_id=get_jwt_identity(),
         )
 
-        ticket.status = TicketStatusModel.query.filter(
+        used_status = TicketStatusModel.query.filter(
             TicketStatusModel.name == "used"
         ).first()
 
+        ticket.status = used_status
+
         db.session.add(ticket_checkin)
+
+        history_record = TicketStatusHistoryModel(
+            ticket_id=ticket_id,
+            status_id=used_status.id,
+            changed_by_id=get_jwt_identity(),
+        )
+        db.session.add(history_record)
+
         db.session.commit()
 
         return ticket_checkin

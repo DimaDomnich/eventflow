@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_smorest import abort
 from sqlalchemy.orm import joinedload
 from app.models.category import EventCategoryModel
-from app.models.event import EventModel, EventTagModel
+from app.models.event import EventModel, EventStatusHistoryModel, EventTagModel
 from app.models.status import EventStatusModel
 from app.models.tag import TagModel
 from app.models.ticket import TicketTypeModel
@@ -86,8 +86,14 @@ class EventsList(MethodView):
         data = {**validated_data, "organizer_id": user_id}
 
         event = EventModel(**data)
-
         db.session.add(event)
+        db.session.flush()
+
+        history_record = EventStatusHistoryModel(
+            event_id=event.id, status_id=event.status_id, changed_by_id=user_id
+        )
+        db.session.add(history_record)
+
         db.session.commit()
 
         return event
@@ -154,6 +160,11 @@ class EventStatus(MethodView):
             abort(404, message="Invalid status.")
 
         setattr(event, "status_id", status_id)
+
+        history_record = EventStatusHistoryModel(
+            event_id=event_id, status_id=status_id, changed_by_id=get_jwt_identity()
+        )
+        db.session.add(history_record)
 
         db.session.commit()
 

@@ -1,7 +1,7 @@
 from flask.views import MethodView
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.order import OrderModel
-from app.models.ticket import TicketModel, TicketTypeModel
+from app.models.ticket import TicketModel, TicketStatusHistoryModel, TicketTypeModel
 from app.schemas.order import CreateOrderSchema, OrderSchema
 from app.utils.decorators import role_required
 from sqlalchemy.orm import joinedload
@@ -65,13 +65,24 @@ class Orders(MethodView):
 
         for t in ticket_types:
             req_ticket_type = req_map[t.id]
+            tickets = []
 
             for _ in range(req_ticket_type["count"]):
                 ticket = TicketModel(order_id=order.id, ticket_type_id=t.id)
                 order_total += t.price
                 db.session.add(ticket)
+                tickets.append(ticket)
 
             t.sold_count = t.sold_count + req_ticket_type["count"]
+            db.session.flush()
+
+            for ticket in tickets:
+                history_record = TicketStatusHistoryModel(
+                    ticket_id=ticket.id,
+                    status_id=ticket.status_id,
+                    changed_by_id=get_jwt_identity(),
+                )
+                db.session.add(history_record)
 
         order.total_amount = order_total
 
