@@ -18,8 +18,10 @@ from app.schemas.event import (
 )
 from app.extensions import db
 from app.schemas.ticket import TicketTypeSchema
+from app.utils.cache import get_cached, invalidate_pattern, make_cache_key, set_cached
 from app.utils.decorators import role_required
 from app.utils.files import validate_image_files
+from app.utils.query_builder import QueryBuilder
 from app.utils.s3 import extract_s3_key, remove_file_from_s3, upload_file_to_s3
 from . import events_blp
 
@@ -31,46 +33,59 @@ class EventsList(MethodView):
     @events_blp.response(200, EventListSchema)
     def get(self, validated_params):
         page, per_page = (validated_params["page"], validated_params["per_page"])
+        cache_key = make_cache_key(validated_params)
 
-        query = EventModel.query.options(
-            joinedload(EventModel.category),
-            joinedload(EventModel.status),
-            joinedload(EventModel.organizer),
-            joinedload(EventModel.tags),
-            joinedload(EventModel.ticket_types),
+        cached = get_cached(cache_key)
+        if cached:
+            return cached
+
+        query = (
+            QueryBuilder(
+                EventModel.query.options(
+                    joinedload(EventModel.category),
+                    joinedload(EventModel.status),
+                    joinedload(EventModel.organizer),
+                    joinedload(EventModel.tags),
+                    joinedload(EventModel.ticket_types),
+                )
+            )
+            .filter_if(
+                validated_params["search"],
+                lambda: EventModel.title.ilike(f"%{validated_params['search']}%"),
+            )
+            .filter_if(
+                validated_params["category_id"],
+                lambda: EventModel.category_id == validated_params["category_id"],
+            )
+            .filter_if(
+                validated_params["status_id"],
+                lambda: EventModel.status_id == validated_params["status_id"],
+            )
+            .filter_if(
+                validated_params["starts_after"],
+                lambda: EventModel.starts_at >= validated_params["starts_after"],
+            )
+            .filter_if(
+                validated_params["starts_before"],
+                lambda: EventModel.starts_at <= validated_params["starts_before"],
+            )
+            .sort(
+                EventModel, validated_params["sort_by"], validated_params["sort_order"]
+            )
+            .build()
         )
-
-        if validated_params["search"]:
-            query = query.filter(
-                EventModel.title.ilike(f"%{validated_params['search']}%")
-            )
-
-        if validated_params["category_id"]:
-            query = query.filter(
-                EventModel.category_id == validated_params["category_id"]
-            )
-
-        if validated_params["status_id"]:
-            query = query.filter(EventModel.status_id == validated_params["status_id"])
-
-        if validated_params["starts_after"]:
-            query = query.filter(
-                EventModel.starts_at >= validated_params["starts_after"]
-            )
-
-        if validated_params["starts_before"]:
-            query = query.filter(
-                EventModel.starts_at <= validated_params["starts_before"]
-            )
-
-        sort_col = getattr(EventModel, validated_params["sort_by"])
-        if validated_params["sort_order"] == "desc":
-            query = query.order_by(sort_col.desc())
-        else:
-            query = query.order_by(sort_col.asc())
 
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
+        data = {
+            "items": EventSchema(many=True).dump(pagination.items),
+            "total": pagination.total,
+            "pages": pagination.pages,
+            "page": pagination.page,
+            "per_page": pagination.per_page,
+        }
+
+        set_cached(cache_key, data)
         return pagination
 
     @jwt_required()
@@ -95,6 +110,7 @@ class EventsList(MethodView):
         db.session.add(history_record)
 
         db.session.commit()
+        invalidate_pattern("events:*")
 
         return event
 
@@ -124,6 +140,7 @@ class Event(MethodView):
             setattr(event, key, value)
 
         db.session.commit()
+        invalidate_pattern("events:*")
 
         return event
 
@@ -137,6 +154,7 @@ class Event(MethodView):
             abort(400, message="Only draft events can be deleted.")
 
         db.session.delete(event)
+        invalidate_pattern("events:*")
         db.session.commit()
 
 
@@ -167,6 +185,7 @@ class EventStatus(MethodView):
         db.session.add(history_record)
 
         db.session.commit()
+        invalidate_pattern("events:*")
 
         return event
 
@@ -200,6 +219,7 @@ class EventTicketTypes(MethodView):
 
         db.session.add(ticket_type)
         db.session.commit()
+        invalidate_pattern("events:*")
 
         return ticket_type
 
