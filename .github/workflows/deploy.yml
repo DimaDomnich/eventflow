@@ -2,8 +2,8 @@ name: Deploy to ECS
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - "v*"
 
 env:
   AWS_REGION: eu-central-1
