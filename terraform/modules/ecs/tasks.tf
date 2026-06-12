@@ -18,12 +18,23 @@ resource "aws_ecs_task_definition" "web" {
           protocol      = "tcp"
         }
       ]
+      secrets = [
+        {
+          name      = "DATABASE_URL"
+          valueFrom = var.db_url_arn
+        },
+        {
+          name      = "SECRET_KEY"
+          valueFrom = var.secret_key_arn
+        },
+        {
+          name      = "JWT_SECRET_KEY"
+          valueFrom = var.jwt_secret_key_arn
+        }
+      ]
       environment = [
         { name = "FLASK_ENV", value = var.environment },
-        { name = "DATABASE_URL", value = "postgresql://eventflow:${var.db_password}@${var.db_url}/eventflow" },
         { name = "REDIS_URL", value = "redis://${var.redis_url}:6379/0" },
-        { name = "SECRET_KEY", value = var.secret_key },
-        { name = "JWT_SECRET_KEY", value = var.jwt_secret_key },
         { name = "AWS_REGION", value = var.aws_region },
         { name = "S3_BUCKET", value = var.s3_bucket },
         { name = "SES_SENDER", value = var.ses_sender },
@@ -59,12 +70,23 @@ resource "aws_ecs_task_definition" "worker" {
       name    = "worker"
       image   = "${var.ecr_repository_url}:latest"
       command = ["celery", "-A", "worker.celery", "worker", "--loglevel=info"]
+      secrets = [
+        {
+          name      = "DATABASE_URL"
+          valueFrom = var.db_url_arn
+        },
+        {
+          name      = "SECRET_KEY"
+          valueFrom = var.secret_key_arn
+        },
+        {
+          name      = "JWT_SECRET_KEY"
+          valueFrom = var.jwt_secret_key_arn
+        }
+      ]
       environment = [
         { name = "FLASK_ENV", value = var.environment },
-        { name = "DATABASE_URL", value = "postgresql://eventflow:${var.db_password}@${var.db_url}/eventflow" },
         { name = "REDIS_URL", value = "redis://${var.redis_url}:6379/0" },
-        { name = "SECRET_KEY", value = var.secret_key },
-        { name = "JWT_SECRET_KEY", value = var.jwt_secret_key },
         { name = "AWS_REGION", value = var.aws_region },
         { name = "SES_SENDER", value = var.ses_sender },
       ]
@@ -99,12 +121,23 @@ resource "aws_ecs_task_definition" "beat" {
       name    = "beat"
       image   = "${var.ecr_repository_url}:latest"
       command = ["celery", "-A", "worker.celery", "beat", "--loglevel=info"]
+      secrets = [
+        {
+          name      = "DATABASE_URL"
+          valueFrom = var.db_url_arn
+        },
+        {
+          name      = "SECRET_KEY"
+          valueFrom = var.secret_key_arn
+        },
+        {
+          name      = "JWT_SECRET_KEY"
+          valueFrom = var.jwt_secret_key_arn
+        }
+      ]
       environment = [
         { name = "FLASK_ENV", value = var.environment },
-        { name = "DATABASE_URL", value = "postgresql://eventflow:${var.db_password}@${var.db_url}/eventflow" },
         { name = "REDIS_URL", value = "redis://${var.redis_url}:6379/0" },
-        { name = "SECRET_KEY", value = var.secret_key },
-        { name = "JWT_SECRET_KEY", value = var.jwt_secret_key },
       ]
       logConfiguration = {
         logDriver = "awslogs"

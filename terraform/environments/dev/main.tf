@@ -91,8 +91,6 @@ module "ecs" {
   ses_sender            = var.ses_sender_email
   aws_region            = var.aws_region
   s3_bucket             = var.s3_bucket_name
-  secret_key            = var.secret_key
-  jwt_secret_key        = var.jwt_secret_key
   db_url                = module.rds.db_endpoint
   redis_url             = module.elasti_cache.redis_endpoint
   ecr_repository_url    = module.ecr.app_repository_url
@@ -101,7 +99,14 @@ module "ecs" {
   vpc_id                = module.vpc.vpc_id
   target_group_arn      = module.alb.target_group_arn
   alb_security_group_id = module.alb.alb_security_group_id
-  db_password           = var.db_password
+  secret_key_arn        = module.secrets.secret_key_arn
+  jwt_secret_key_arn    = module.secrets.jwt_secret_key_arn
+  db_url_arn            = module.secrets.db_url_arn
+  secret_arns = [
+    module.secrets.secret_key_arn,
+    module.secrets.jwt_secret_key_arn,
+    module.secrets.db_url_arn
+  ]
 }
 
 module "bastion" {
@@ -111,4 +116,14 @@ module "bastion" {
   allowed_ip       = var.allowed_ip
   public_subnet_id = module.vpc.public_subnet_ids[0]
   vpc_id           = module.vpc.vpc_id
+}
+
+module "secrets" {
+  source         = "../../modules/secrets"
+  project_name   = var.project_name
+  environment    = var.environment
+  db_password    = var.db_password
+  secret_key     = var.secret_key
+  jwt_secret_key = var.jwt_secret_key
+  db_url         = var.db_url
 }

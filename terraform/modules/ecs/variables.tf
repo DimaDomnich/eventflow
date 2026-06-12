@@ -5,12 +5,15 @@ variable "private_subnet_ids" {}
 variable "public_subnet_ids" {}
 variable "db_url" {}
 variable "redis_url" {}
-variable "jwt_secret_key" {}
-variable "secret_key" {}
 variable "aws_region" {}
 variable "s3_bucket" {}
 variable "ses_sender" {}
 variable "ecr_repository_url" {}
 variable "alb_security_group_id" {}
 variable "target_group_arn" {}
-variable "db_password" {}
+variable "secret_arns" {
+  type = list(string)
+}
+variable "secret_key_arn" {}
+variable "jwt_secret_key_arn" {}
+variable "db_url_arn" {}

@@ -33,3 +33,7 @@ variable "secret_key" {
 variable "allowed_ip" {
   sensitive = true
 }
+
+variable "db_url" {
+  sensitive = true
+}
