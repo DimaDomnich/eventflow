@@ -9,7 +9,6 @@ class QueryBuilder:
         self.query = query
 
     def filter_if(self, condition, criterion_fn):
-        print(condition, "condition")
         if condition:
             self.query = self.query.filter(criterion_fn())
         return self

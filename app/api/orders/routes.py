@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.order import OrderModel
 from app.models.ticket import TicketModel, TicketStatusHistoryModel, TicketTypeModel
 from app.schemas.order import CreateOrderSchema, OrderSchema
+from app.utils.cache import rate_limit
 from app.utils.decorators import role_required
 from sqlalchemy.orm import joinedload
 from app.extensions import db
@@ -27,6 +28,7 @@ class Orders(MethodView):
 
     @jwt_required()
     @role_required("attendee")
+    @rate_limit("orders")
     @orders_blp.arguments(CreateOrderSchema)
     @orders_blp.response(201, OrderSchema)
     def post(self, validated_data):
