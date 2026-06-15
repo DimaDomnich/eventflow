@@ -18,6 +18,7 @@ from app.schemas.event import (
 )
 from app.extensions import db
 from app.schemas.ticket import TicketTypeSchema
+from app.tasks.order import cancel_pending_orders_for_event
 from app.utils.cache import get_cached, invalidate_pattern, make_cache_key, set_cached
 from app.utils.decorators import role_required
 from app.utils.files import validate_image_files
@@ -174,8 +175,7 @@ class EventStatus(MethodView):
             abort(400, message="Status can't be changed.")
 
         status_id = validated_data["status_id"]
-        if not db.session.get(EventStatusModel, status_id):
-            abort(404, message="Invalid status.")
+        new_event_status = EventStatusModel.query.get_or_404(status_id)
 
         setattr(event, "status_id", status_id)
 
@@ -183,6 +183,9 @@ class EventStatus(MethodView):
             event_id=event_id, status_id=status_id, changed_by_id=get_jwt_identity()
         )
         db.session.add(history_record)
+
+        if new_event_status.name in ("cancelled", "completed"):
+            cancel_pending_orders_for_event.delay(event_id)
 
         db.session.commit()
         invalidate_pattern("events:*")

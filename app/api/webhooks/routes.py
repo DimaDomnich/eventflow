@@ -68,7 +68,6 @@ class StripeWebhook(MethodView):
                 return {"status": f"successfully confirmed order {order.id}"}, 200
 
             elif event_type == "payment_intent.payment_failed":
-                print("RAN")
                 order = OrderModel.query.filter_by(payment_intent_id=p_id).first()
                 if not order:
                     return {"status": "order not found"}, 200

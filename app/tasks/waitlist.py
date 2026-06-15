@@ -9,7 +9,6 @@ from datetime import datetime, timedelta, timezone
 
 @celery.task
 def notify_next_waitlist_person(event_id):
-    print("RAN 3")
     waitlist = (
         WaitlistModel.query.filter(
             WaitlistModel.event_id == event_id,
