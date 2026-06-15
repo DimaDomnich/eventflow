@@ -1,6 +1,6 @@
 from flask import Flask
 from .config import config_map
-from .extensions import db, migrate, jwt, bcrypt, configure_jwt
+from .extensions import db, init_stripe, migrate, jwt, bcrypt, configure_jwt
 from flask_smorest import Api
 from . import models
 import os
@@ -18,6 +18,7 @@ def create_app():
     jwt.init_app(app)
     configure_jwt(app, jwt)
     bcrypt.init_app(app)
+    init_stripe()
 
     api = Api(app)
 
@@ -27,6 +28,7 @@ def create_app():
     from .api.waitlist import waitlist_blp
     from .api.tickets import tickets_blp
     from .api.tags import tags_blp
+    from .api.webhooks import webhooks_blp
 
     api.register_blueprint(auth_blp, url_prefix="/api/auth")
     api.register_blueprint(events_blp, url_prefix="/api/events")
@@ -34,6 +36,7 @@ def create_app():
     api.register_blueprint(waitlist_blp, url_prefix="/api/waitlist")
     api.register_blueprint(tickets_blp, url_prefix="/api/tickets")
     api.register_blueprint(tags_blp, url_prefix="/api/tags")
+    api.register_blueprint(webhooks_blp, url_prefix="/api/webhooks")
 
     class ContextTask(celery.Task):
         def __call__(self, *args, **kwargs):

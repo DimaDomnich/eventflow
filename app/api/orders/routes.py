@@ -1,6 +1,8 @@
 from flask.views import MethodView
 from flask_jwt_extended import jwt_required, get_jwt_identity
+import stripe
 from app.models.order import OrderModel
+from app.models.status import OrderStatusModel
 from app.models.ticket import TicketModel, TicketStatusHistoryModel, TicketTypeModel
 from app.schemas.order import CreateOrderSchema, OrderSchema
 from app.utils.cache import rate_limit
@@ -91,3 +93,31 @@ class Orders(MethodView):
         db.session.commit()
 
         return order
+
+
+@orders_blp.route("<int:order_id>/payment-intent")
+class OrderPaymentIntent(MethodView):
+    @jwt_required()
+    @role_required("attendee")
+    @orders_blp.response(201)
+    def post(self, order_id):
+        order = OrderModel.query.get_or_404(order_id)
+
+        if str(order.user_id) != get_jwt_identity():
+            abort(403, message="Forbidden.")
+
+        pending_order_status = OrderStatusModel.query.filter_by(name="pending").first()
+
+        if order.status_id != pending_order_status.id:
+            abort(400, message="Order is not pending.")
+
+        payment_intent = stripe.PaymentIntent.create(
+            amount=int(order.total_amount * 100),  # in cents
+            currency="usd",
+            automatic_payment_methods={"enabled": True, "allow_redirects": "never"},
+        )
+        order.payment_intent_id = payment_intent.id
+
+        db.session.commit()
+
+        return {"client_secret": payment_intent.client_secret}

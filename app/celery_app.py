@@ -9,7 +9,7 @@ celery = Celery(
     "eventflow",
     broker=os.getenv("REDIS_URL"),
     backend=os.getenv("REDIS_URL"),
-    include=["app.tasks.waitlist"],
+    include=["app.tasks.waitlist", "app.tasks.order"],
 )
 
 

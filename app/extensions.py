@@ -5,6 +5,7 @@ from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
 import redis
 import os
+import stripe
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -40,3 +41,7 @@ def get_ses_client():
         aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
         region_name=os.getenv("AWS_REGION"),
     )
+
+
+def init_stripe():
+    stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
