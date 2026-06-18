@@ -2,18 +2,29 @@ from flask import request
 from flask.views import MethodView
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_smorest import abort
+from sqlalchemy import func, select
 from sqlalchemy.orm import joinedload
 from app.models.category import EventCategoryModel
-from app.models.event import EventModel, EventStatusHistoryModel, EventTagModel
-from app.models.status import EventStatusModel
+from app.models.event import (
+    EventModel,
+    EventStatusHistoryModel,
+    EventTagModel,
+    EventsRatingModel,
+)
+from app.models.order import OrderModel
+from app.models.status import EventStatusModel, OrderStatusModel, TicketStatusModel
 from app.models.tag import TagModel
-from app.models.ticket import TicketTypeModel
+from app.models.ticket import TicketModel, TicketTypeModel
 from app.schemas.event import (
     AddTagToEventSchema,
     CreateEventSchema,
     EventListQuerySchema,
     EventListSchema,
+    EventRatingDistributionSchema,
+    EventRatingListSchema,
+    EventRatingSchema,
     EventSchema,
+    TopRatedEventsSchema,
     UpdateEventStatusSchema,
 )
 from app.extensions import db
@@ -329,3 +340,163 @@ class UploadEventBanner(MethodView):
         db.session.commit()
 
         return event
+
+
+@events_blp.route("/<int:event_id>/rate")
+class EventRating(MethodView):
+    @jwt_required()
+    @events_blp.response(200, EventRatingListSchema)
+    def get(self, event_id):
+        event_ratings = (
+            db.session.execute(
+                select(EventsRatingModel)
+                .join(EventModel, onclause=EventModel.id == EventsRatingModel.event_id)
+                .where(EventModel.id == event_id)
+            )
+            .scalars()
+            .all()
+        )
+
+        avg, total = db.session.execute(
+            select(
+                func.avg(EventsRatingModel.score), func.count(EventsRatingModel.id)
+            ).where(EventsRatingModel.event_id == event_id)
+        ).first()
+
+        return {
+            "items": event_ratings,
+            "avg": avg,
+            "total": total,
+        }
+
+    @jwt_required()
+    @role_required("attendee")
+    @events_blp.arguments(EventRatingSchema)
+    @events_blp.response(201, EventRatingSchema)
+    def post(self, validated_data, event_id):
+        event = db.session.get(EventModel, event_id)
+
+        if not event:
+            abort(404, message="Event not found.")
+
+        completed_event_status = db.session.execute(
+            select(EventStatusModel).where(EventStatusModel.name == "completed")
+        ).scalar()
+
+        if event.status_id != completed_event_status.id:
+            abort(400, message="Event is not completed.")
+
+        user_id = int(get_jwt_identity())
+
+        if db.session.execute(
+            select(EventsRatingModel).where(
+                EventsRatingModel.event_id == event_id,
+                EventsRatingModel.user_id == user_id,
+            )
+        ).scalar():
+            abort(400, message="User already rated this event.")
+
+        confirmed_order_status = db.session.execute(
+            select(OrderStatusModel).where(OrderStatusModel.name == "confirmed")
+        ).scalar()
+        valid_ticket_statuses = (
+            db.session.execute(
+                select(TicketStatusModel).where(
+                    TicketStatusModel.name.in_(["confirmed", "used"])
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        valid_ticket_status_ids = [
+            valid_ticket_status.id for valid_ticket_status in valid_ticket_statuses
+        ]
+
+        # has_ticket = False
+
+        # for order in user.orders:
+        #     if order.status_id == confirmed_order_status.id:
+        #         for ticket in order.tickets:
+        #             if ticket.ticket_type.event_id == event_id and ticket.status_id in [
+        #                 valid_ticket_status.id
+        #                 for valid_ticket_status in valid_ticket_statuses
+        #             ]:
+        #                 has_ticket = True
+
+        has_ticket = db.session.execute(
+            select(TicketModel)
+            .join(
+                TicketTypeModel,
+                onclause=TicketTypeModel.id == TicketModel.ticket_type_id,
+            )
+            .join(OrderModel, onclause=OrderModel.id == TicketModel.order_id)
+            .where(
+                TicketTypeModel.event_id == event_id,
+                OrderModel.user_id == user_id,
+                OrderModel.status_id == confirmed_order_status.id,
+                TicketModel.status_id.in_(valid_ticket_status_ids),
+            )
+        ).scalar()
+
+        if not has_ticket:
+            abort(400, message="User doesn't have paid ticket for this event.")
+
+        event_rate = EventsRatingModel(
+            user_id=user_id, event_id=event_id, **validated_data
+        )
+
+        db.session.add(event_rate)
+        db.session.commit()
+
+        return event_rate
+
+
+@events_blp.route("/<int:event_id>/rate/distribution")
+class EventRatingDistribution(MethodView):
+    @jwt_required()
+    @events_blp.response(200, EventRatingDistributionSchema(many=True))
+    def get(self, event_id):
+        distribution = db.session.execute(
+            select(EventsRatingModel.score, func.count(EventsRatingModel.id))
+            .where(EventsRatingModel.event_id == event_id)
+            .group_by(EventsRatingModel.score)
+            .order_by(EventsRatingModel.score.desc())
+        ).all()
+
+        data = [{"score": score, "count": count} for score, count in distribution]
+
+        return data
+
+
+@events_blp.route("/top-rated")
+class TopRatedEvents(MethodView):
+    @jwt_required()
+    @events_blp.response(200, TopRatedEventsSchema(many=True))
+    def get(self):
+        top_rated = db.session.execute(
+            select(
+                EventModel.id,
+                EventModel.title,
+                func.avg(EventsRatingModel.score).label("avg_score"),
+                func.count(EventsRatingModel.id).label("total_ratings"),
+            )
+            .join(
+                EventsRatingModel,
+                onclause=EventModel.id == EventsRatingModel.event_id,
+            )
+            .group_by(
+                EventModel.id,
+                EventModel.title,
+            )
+            .having(func.count(EventsRatingModel.id) >= 1)
+            .order_by(func.avg(EventsRatingModel.score).desc())
+            .limit(10)
+        ).all()
+
+        data = [
+            {"id": id, "title": title, "avg": avg, "total_ratings": total_ratings}
+            for id, title, avg, total_ratings in top_rated
+        ]
+
+        return data

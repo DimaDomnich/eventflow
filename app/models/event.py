@@ -72,3 +72,23 @@ class EventTagModel(db.Model):
 
     event_id: Mapped[int] = mapped_column(ForeignKey("events.id"), primary_key=True)
     tag_id: Mapped[int] = mapped_column(ForeignKey("tags.id"), primary_key=True)
+
+
+class EventsRatingModel(db.Model):
+    __tablename__ = "events_rating"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id"))
+    event: Mapped["EventModel"] = relationship()
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    user: Mapped["UserModel"] = relationship()
+
+    score: Mapped[int] = mapped_column()
+    comment: Mapped[str | None] = mapped_column(nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        server_default=func.now(), onupdate=func.now()
+    )

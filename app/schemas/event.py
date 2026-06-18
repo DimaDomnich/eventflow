@@ -63,3 +63,30 @@ class UpdateEventStatusSchema(Schema):
 
 class AddTagToEventSchema(Schema):
     tag_id = fields.Int(required=True)
+
+
+class EventRatingSchema(Schema):
+    id = fields.Int(dump_only=True)
+    score = fields.Int(required=True, validate=validate.Range(min=1, max=10))
+    comment = fields.Str(required=False)
+
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
+
+
+class EventRatingListSchema(Schema):
+    items = fields.List(fields.Nested(EventRatingSchema))
+    avg = fields.Float()
+    total = fields.Int()
+
+
+class EventRatingDistributionSchema(Schema):
+    score = fields.Int()
+    count = fields.Int()
+
+
+class TopRatedEventsSchema(Schema):
+    id = fields.Int()
+    title = fields.Str()
+    avg = fields.Float()
+    total_ratings = fields.Int()

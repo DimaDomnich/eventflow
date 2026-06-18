@@ -6,7 +6,7 @@ from .status import (
 )
 from .user import UserModel, UserRoleModel
 from .category import EventCategoryModel
-from .event import EventModel, EventStatusHistoryModel, EventTagModel
+from .event import EventModel, EventStatusHistoryModel, EventTagModel, EventsRatingModel
 from .order import OrderModel
 from .tag import TagModel
 from .ticket import (
@@ -36,4 +36,5 @@ __all__ = [
     "TicketStatusHistoryModel",
     "TicketCheckinsModel",
     "WaitlistModel",
+    "EventsRatingModel",
 ]
