@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, func
+from sqlalchemy import DateTime, ForeignKey, func
 
 from app.extensions import db
 
@@ -23,7 +23,11 @@ class WaitlistModel(db.Model):
     event_id: Mapped[int] = mapped_column(ForeignKey("events.id"))
     event: Mapped["EventModel"] = relationship()
 
-    joined_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    joined_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
-    notified_at: Mapped[datetime] = mapped_column(nullable=True)
-    expired_at: Mapped[datetime] = mapped_column(nullable=True)
+    notified_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    expired_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)

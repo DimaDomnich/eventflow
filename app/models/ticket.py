@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import ForeignKey, Numeric, String, func
+from sqlalchemy import DateTime, ForeignKey, Numeric, String, func
 
 from app.extensions import db
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -22,7 +22,9 @@ class TicketTypeModel(db.Model):
     price: Mapped[Decimal] = mapped_column(Numeric(precision=10, scale=2))
     quantity: Mapped[int] = mapped_column()
     sold_count: Mapped[int] = mapped_column(default=0)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
     event_id: Mapped[int] = mapped_column(
         ForeignKey("events.id", ondelete="CASCADE"),
@@ -35,9 +37,11 @@ class TicketModel(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     qr_code: Mapped[str] = mapped_column(String(500), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"))
@@ -66,7 +70,9 @@ class TicketStatusHistoryModel(db.Model):
     changed_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     user: Mapped["UserModel"] = relationship()
 
-    changed_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    changed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
 
 class TicketCheckinsModel(db.Model):
@@ -80,4 +86,6 @@ class TicketCheckinsModel(db.Model):
     checked_in_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     checked_in_by: Mapped["UserModel"] = relationship()
 
-    checked_in_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    checked_in_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, String, func
+from sqlalchemy import DateTime, ForeignKey, String, func
 
 from app.extensions import db
 from sqlalchemy import Computed
@@ -25,13 +25,15 @@ class EventModel(db.Model):
     title: Mapped[str] = mapped_column(String(100))
     description: Mapped[str] = mapped_column(String(300))
     location: Mapped[str] = mapped_column(String(100))
-    starts_at: Mapped[datetime] = mapped_column()
-    ends_at: Mapped[datetime] = mapped_column()
+    starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    ends_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     capacity: Mapped[int] = mapped_column()
     banner_url: Mapped[str] = mapped_column(String(500), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
     organizer_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
@@ -67,7 +69,9 @@ class EventStatusHistoryModel(db.Model):
     __tablename__ = "events_history"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    changed_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    changed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
     event_id: Mapped[int] = mapped_column(ForeignKey("events.id"))
     event: Mapped["EventModel"] = relationship()
@@ -101,7 +105,9 @@ class EventsRatingModel(db.Model):
     score: Mapped[int] = mapped_column()
     comment: Mapped[str | None] = mapped_column(nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
