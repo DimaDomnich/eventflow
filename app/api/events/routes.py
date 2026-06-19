@@ -61,10 +61,7 @@ class EventsList(MethodView):
                     joinedload(EventModel.ticket_types),
                 )
             )
-            .filter_if(
-                validated_params["search"],
-                lambda: EventModel.title.ilike(f"%{validated_params['search']}%"),
-            )
+            .search(validated_params["search"], EventModel)
             .filter_if(
                 validated_params["category_id"],
                 lambda: EventModel.category_id == validated_params["category_id"],

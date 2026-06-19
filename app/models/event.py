@@ -4,6 +4,8 @@ from datetime import datetime
 from sqlalchemy import ForeignKey, String, func
 
 from app.extensions import db
+from sqlalchemy import Computed
+from sqlalchemy.dialects.postgresql import TSVECTOR
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -48,6 +50,17 @@ class EventModel(db.Model):
     )
 
     ticket_types: Mapped[list["TicketTypeModel"]] = relationship(back_populates="event")
+
+    search_vector: Mapped[str] = mapped_column(
+        TSVECTOR,
+        Computed(
+            "setweight(to_tsvector('english', coalesce(title, '')), 'A') || "
+            "setweight(to_tsvector('english', coalesce(description, '')), 'B') || "
+            "setweight(to_tsvector('english', coalesce(location, '')), 'C')",
+            persisted=True,
+        ),
+        nullable=True,
+    )
 
 
 class EventStatusHistoryModel(db.Model):

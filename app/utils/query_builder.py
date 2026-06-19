@@ -1,5 +1,5 @@
 from flask_sqlalchemy.query import Query
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, func
 
 
 class QueryBuilder:
@@ -11,6 +11,19 @@ class QueryBuilder:
     def filter_if(self, condition, criterion_fn):
         if condition:
             self.query = self.query.filter(criterion_fn())
+        return self
+
+    def search(self, condition, model):
+        if not condition:
+            return self
+
+        search_query = func.websearch_to_tsquery("english", condition)
+
+        self.query = self.query.filter(model.search_vector.op("@@")(search_query))
+
+        rank = func.ts_rank(model.search_vector, search_query)
+        self.query = self.query.order_by(desc(rank))
+
         return self
 
     def sort(self, model, sort_by, sort_order):
