@@ -11,3 +11,4 @@ marshmallow
 celery[redis]
 boto3
 stripe
+gunicorn

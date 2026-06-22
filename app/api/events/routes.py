@@ -25,6 +25,7 @@ from app.schemas.event import (
     EventRatingSchema,
     EventSchema,
     TopRatedEventsSchema,
+    UpdateEventSchema,
     UpdateEventStatusSchema,
 )
 from app.extensions import db
@@ -133,7 +134,7 @@ class Event(MethodView):
 
     @jwt_required()
     @role_required("organizer")
-    @events_blp.arguments(CreateEventSchema(partial=True))
+    @events_blp.arguments(UpdateEventSchema(partial=True))
     @events_blp.response(200, EventSchema)
     def patch(self, validated_data, event_id):
         event = EventModel.query.get_or_404(event_id)

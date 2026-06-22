@@ -19,6 +19,10 @@ class CreateEventSchema(Schema):
     category_id = fields.Int(required=True)
 
 
+class UpdateEventSchema(CreateEventSchema):
+    pass
+
+
 class EventSchema(Schema):
     id = fields.Int(dump_only=True)
     title = fields.Str()
